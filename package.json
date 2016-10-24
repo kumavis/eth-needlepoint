@@ -1,0 +1,16 @@
+{
+  "name": "eth-needlework",
+  "version": "1.0.0",
+  "description": "",
+  "main": "example.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ethereumjs-util": "^4.5.0",
+    "ethereumjs-vm": "^2.0.0",
+    "tape": "^4.6.2"
+  }
+}
