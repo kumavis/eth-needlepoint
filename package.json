@@ -11,6 +11,7 @@
   "dependencies": {
     "ethereumjs-util": "^4.5.0",
     "ethereumjs-vm": "^2.0.0",
+    "flatten": "^1.0.2",
     "tape": "^4.6.2"
   }
 }

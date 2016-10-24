@@ -1,26 +1,25 @@
 const tape = require('tape')
+const flatten = require('flatten')
 const createHookedVm = require('ethereumjs-vm/lib/hooked')
+const returnLastOnStack = require('./lib/returnLastOnStack')
+const _ = require('./lib/opCodes')
 
-tape('hooked-vm', function (test) {
+tape('simple contract test', function (test) {
   var contractAddressHex = '0x1234000000000000000000000000000000001234'
   var contractAddress = new Buffer(contractAddressHex.slice(2), 'hex')
   var contractBalanceHex = '0xabcd00000000000000000000000000000000000000000000000000000000abcd'
 
-  var contractCode = new Buffer([
-    0x30, // ADDRESS of contract being run
-    0x31, // BALANCE of address on stack
+  /*
 
+    A simple contract that returns the balance of itself
+
+  */
+  var contractCode = new Buffer(flatten([
+    _.ADDRESS, // ADDRESS of contract being run
+    _.BALANCE, // BALANCE of address on stack
     // return the last thing on the stack
-    0x60, // PUSH1
-    0x60, // (data1) <-- MSTORE offset                          top| [prev]
-    0x90, // SWAP1                                              top| [prev, data1]
-    0x81, // DUP2                                               top| [data1, prev, data1]
-    0x52, // MSTORE (offset:data1, word:prev)                   top| [data1] -> offset:data1, word:prev
-    0x60, // PUSH
-    0x20, // (data2) <-- RETURN length                          top| [data2, data1]
-    0x90, // SWAP1                                              top| [data1, data2]
-    0xf3  // RETURN (offset:data1, length:data2)                top| [] -> offset:data1, length:data2
-  ])
+    returnLastOnStack({ mstoreOffset: 0x60, returnLength: 0x20 }),
+  ]))
 
   var blockchainState = {
     [contractAddressHex]: {
