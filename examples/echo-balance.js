@@ -1,22 +1,22 @@
 const tape = require('tape')
 const flatten = require('flatten')
-const createHookedVm = require('ethereumjs-vm/lib/hooked')
-const returnLastOnStack = require('./lib/returnLastOnStack')
-const _ = require('./lib/opCodes')
+const createHookedVm = require('ethereumjs-vm/dist/hooked')
+const returnLastOnStack = require('../lib/returnLastOnStack')
+const op = require('../lib/opCodes')
+const { hooksForBlockchainState } = require('./util')
+
+//
+// A simple contract that returns the balance of itself
+//
 
 tape('simple contract test', function (test) {
   var contractAddressHex = '0x1234000000000000000000000000000000001234'
   var contractAddress = new Buffer(contractAddressHex.slice(2), 'hex')
   var contractBalanceHex = '0xabcd00000000000000000000000000000000000000000000000000000000abcd'
 
-  /*
-
-    A simple contract that returns the balance of itself
-
-  */
   var contractCode = new Buffer(flatten([
-    _.ADDRESS, // ADDRESS of contract being run
-    _.BALANCE, // BALANCE of address on stack
+    op.ADDRESS, // ADDRESS of contract being run
+    op.BALANCE, // BALANCE of address on stack
     // return the last thing on the stack
     returnLastOnStack({ mstoreOffset: 0x60, returnLength: 0x20 }),
   ]))
@@ -43,7 +43,7 @@ tape('simple contract test', function (test) {
   vm.runCode({
     code: contractCode,
     address: contractAddress,
-    gasLimit: new Buffer('ffffffffff')
+    gasLimit: Buffer.from('ffffffffff', 'hex')
   }, function (err, results) {
     // console.log(arguments)
 
@@ -55,28 +55,3 @@ tape('simple contract test', function (test) {
     test.end()
   })
 })
-
-function hooksForBlockchainState (blockchainState) {
-  return {
-    fetchAccountBalance: function (addressHex, cb) {
-      var value = blockchainState[addressHex].balance
-        // console.log('fetchAccountBalance', addressHex, '->', value)
-      cb(null, value)
-    },
-    fetchAccountNonce: function (addressHex, cb) {
-      var value = blockchainState[addressHex].nonce
-        // console.log('fetchAccountNonce', addressHex, '->', value)
-      cb(null, value)
-    },
-    fetchAccountCode: function (addressHex, cb) {
-      var value = blockchainState[addressHex].code
-        // console.log('fetchAccountCode', addressHex, '->', value)
-      cb(null, value)
-    },
-    fetchAccountStorage: function (addressHex, keyHex, cb) {
-      var value = blockchainState[addressHex].storage[keyHex]
-        // console.log('fetchAccountStorage', addressHex, keyHex, '->', value)
-      cb(null, value)
-    }
-  }
-}
