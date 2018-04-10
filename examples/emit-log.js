@@ -7,7 +7,7 @@ const compile = require('../lib/compile')
 const returnLastOnStack = require('../lib/returnLastOnStack')
 const op = require('../lib/opCodes')
 const symbol = require('../lib/symbols')
-const { loadCallData, log } = require('../lib/opFn')
+const { copyCallData, memLoad, log } = require('../lib/opFn')
 const codeToConstructor = require('../lib/codeToConstructor')
 const { hooksForBlockchainState } = require('./util')
 
@@ -21,13 +21,15 @@ const { hooksForBlockchainState } = require('./util')
 tape('emit log contract', function (test) {
   const senderAddressHex = ethUtil.bufferToHex(ethUtil.setLengthRight(ethUtil.toBuffer('0xffff'), 20))
   const contractAddressHex = ethUtil.bufferToHex(ethUtil.setLengthRight(ethUtil.toBuffer('0x1234'), 20))
-  const dataSlugHex = ethUtil.bufferToHex(ethUtil.setLengthRight(ethUtil.toBuffer('0x43110'), 32))
+  const dataSlugHex = ethUtil.bufferToHex(ethUtil.setLengthRight(ethUtil.toBuffer('0xdeadbeef'), 32))
 
   const contractCode = new Buffer(compile([
-    // load tx data onto stack
-    loadCallData(),
-    // emit a log with one topic, using item from stack
-    log({ logs: [symbol.FROM_STACK] })
+    // load tx data into memory at 0 (default)
+    copyCallData(),
+    // load the tx data from memory at 0 onto the stack
+    memLoad(),
+    // emit a log with one topic (tx data from the stack) and content (tx data from memory at 0)
+    log({ logs: [symbol.FROM_STACK] }),
   ]))
   const constructorCode = new Buffer(compile(codeToConstructor(contractCode)))
 
@@ -56,7 +58,10 @@ tape('emit log contract', function (test) {
 
   // vm.on('step', function(stepData){
   //   console.log(`========================================================`)
-  //   console.log(`stack:`,stepData.stack)
+  //   const stack = stepData.stack.map(entry => ethUtil.bufferToHex(entry))
+  //   console.log(`stack: [\n  ${stack.join(',\n  ')}\n]`)
+  //   const memory = ethUtil.bufferToHex(Buffer.from(stepData.memory))
+  //   console.log(`memory: [${memory}]`)
   //   console.log(`${stepData.opcode.name} (${stepData.opcode.in})->(${stepData.opcode.out})`)
   // })
 
@@ -76,7 +81,8 @@ tape('emit log contract', function (test) {
     test.equal(topics.length, 1, 'should contain one topic')
     const theTopic = topics[0]
     test.equal(ethUtil.bufferToHex(theTopic), dataSlugHex, 'topic should match sent data')
-    test.equal(mem.length, 0, 'captured memory should be zero length')
+    test.equal(mem.length, 32, 'captured memory should be 32 bytes')
+    test.equal(ethUtil.bufferToHex(mem), dataSlugHex, 'captured memory should match sent data')
 
     test.end()
   })
