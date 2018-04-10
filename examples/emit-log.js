@@ -1,13 +1,15 @@
 const tape = require('tape')
 const createHookedVm = require('ethereumjs-vm/dist/hooked')
 const FakeTransaction = require('ethereumjs-tx/fake')
+const ethUtil = require('ethereumjs-util')
+
 const compile = require('../lib/compile')
 const returnLastOnStack = require('../lib/returnLastOnStack')
 const op = require('../lib/opCodes')
 const symbol = require('../lib/symbols')
 const { loadCallData, log } = require('../lib/opFn')
+const codeToConstructor = require('../lib/codeToConstructor')
 const { hooksForBlockchainState } = require('./util')
-const ethUtil = require('ethereumjs-util')
 
 //
 // A simple contract that emits a log based on tx data
@@ -19,13 +21,15 @@ tape('emit log contract', function (test) {
   const dataSlugHex = ethUtil.bufferToHex(ethUtil.setLengthRight(ethUtil.toBuffer('0x43110'), 32))
 
   const contractCode = new Buffer(compile([
-    // load call data onto stack
+    // load tx data onto stack
     loadCallData(),
-    // emit log using item from stack
+    // emit a log with one topic, using item from stack
     log({ logs: [symbol.FROM_STACK] })
   ]))
+  const constructorCode = new Buffer(compile(codeToConstructor(contractCode)))
 
-  console.log(contractCode)
+  console.log('compiled code:', ethUtil.bufferToHex(contractCode))
+  console.log('deploy code:', ethUtil.bufferToHex(constructorCode))
 
   const blockchainState = {
     [contractAddressHex]: {
