@@ -9,7 +9,7 @@ const { hooksForBlockchainState } = require('./util')
 // A simple contract that returns the balance of itself
 //
 
-tape('simple contract test', function (test) {
+tape('echo balance contract', function (test) {
   var contractAddressHex = '0x1234000000000000000000000000000000001234'
   var contractAddress = new Buffer(contractAddressHex.slice(2), 'hex')
   var contractBalanceHex = '0xabcd00000000000000000000000000000000000000000000000000000000abcd'
