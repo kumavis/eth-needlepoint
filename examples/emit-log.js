@@ -15,6 +15,9 @@ const { hooksForBlockchainState } = require('./util')
 // A simple contract that emits a log based on tx data
 //
 
+// compiled code: 0x60003560006000a1
+// deploy code: 0x6008600c60003960086000f360003560006000a1
+
 tape('emit log contract', function (test) {
   const senderAddressHex = ethUtil.bufferToHex(ethUtil.setLengthRight(ethUtil.toBuffer('0xffff'), 20))
   const contractAddressHex = ethUtil.bufferToHex(ethUtil.setLengthRight(ethUtil.toBuffer('0x1234'), 20))
